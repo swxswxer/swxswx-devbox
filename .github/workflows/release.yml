@@ -1,4 +1,4 @@
-name: Build and Release
+name: Windows Build and Release
 
 on:
   push:
@@ -7,16 +7,7 @@ on:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest]
-        include:
-          - os: macos-latest
-            artifact_name: swxTools-darwin-amd64.dmg
-          - os: windows-latest
-            artifact_name: swxTools-windows-amd64.exe
-
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
@@ -42,21 +33,13 @@ jobs:
         run: cd frontend && npm ci
 
       - name: Build with Wails
-        run: wails build -clean -platform ${{ matrix.os == 'macos-latest' && 'darwin/amd64' || 'windows/amd64' }}
+        run: wails build -clean -platform windows/amd64
 
-      - name: Upload artifacts (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
           path: build/bin/*.exe
-
-      - name: Upload artifacts (macOS)
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-build
-          path: build/bin/*.dmg
 
   release:
     needs: build
@@ -74,18 +57,10 @@ jobs:
           name: windows-build
           path: windows-artifacts
 
-      - name: Download macOS artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-build
-          path: macos-artifacts
-
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            windows-artifacts/*.exe
-            macos-artifacts/*.dmg
+          files: windows-artifacts/*.exe
           draft: false
           prerelease: false
           generate_release_notes: true
