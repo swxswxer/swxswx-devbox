@@ -145,20 +145,7 @@ npm run build
 wails build
 ```
 
-### 构建 DMG 文件 (macOS)
 
-```bash
-create-dmg \
-  --volname "swxTools" \
-  --window-pos 200 120 \
-  --window-size 600 300 \
-  --icon-size 100 \
-  --icon "swxTools.app" 175 120 \
-  --hide-extension "swxTools.app" \
-  --app-drop-link 425 120 \
-  /Users/swxswx/Desktop/code/work-code/swxTools/swxTools.dmg \
-  /Users/swxswx/Desktop/code/work-code/swxTools/build/bin/swxTools.app
-```
 
 ## 截图预览
 
