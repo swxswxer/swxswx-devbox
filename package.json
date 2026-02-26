@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "aiyou-vue-diff": "^1.0.0",
+    "fast-xml-parser": "^5.3.5",
+    "highlight.js": "^11.11.1",
+    "v-code-diff": "^1.13.1",
+    "vue-code-diff": "^1.2.0"
+  }
+}

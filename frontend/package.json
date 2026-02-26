@@ -1,0 +1,25 @@
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "blueimp-md5": "^2.19.0",
+    "element-plus": "^2.13.2",
+    "fast-xml-parser": "^4.3.2",
+    "gm-crypto": "^0.1.12",
+    "highlight.js": "^11.9.0",
+    "qrcode": "^1.5.4",
+    "v-code-diff": "^1.13.1",
+    "vue": "^3.2.37"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^3.0.3",
+    "vite": "^3.0.7"
+  }
+}
