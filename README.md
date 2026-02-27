@@ -124,13 +124,6 @@ frontend/
 ### 本地开发
 
 ```bash
-# 安装依赖
-cd frontend
-npm install
-
-# 启动前端开发服务器
-npm run dev
-
 # 启动 Wails 开发模式（需要 Go 环境）
 wails dev
 ```
@@ -138,17 +131,18 @@ wails dev
 ### 构建
 
 ```bash
-# 构建前端
-npm run build
-
 # 构建 Wails 应用
 wails build
 ```
 
-
-
+## 常见问题
+1.MacOS提示应用程序已损坏，无法打开。
+在终端中执行以下命令：
+```bash
+sudo xattr -dr com.apple.quarantine /Applications/swxTools.app
+```
+然后再次运行应用程序。
 ## 截图预览
-
 > 待补充
 
 ## 许可证
