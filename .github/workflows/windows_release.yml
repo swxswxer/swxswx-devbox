@@ -104,11 +104,12 @@ jobs:
           $version = "${{ needs.validate-tag.outputs.version }}"
           $arch = "${{ matrix.platform }}"
           $source = "build/bin/swxTools.exe"
-          $target = "build/bin/swxTools_${version}_windows_${arch}.exe"
+          $target = "swxTools_" + $version + "_windows_" + $arch + ".exe"
+          $targetPath = "build/bin/" + $target
           
           if (Test-Path $source) {
             Rename-Item -Path $source -NewName $target
-            Write-Host "✅ 重命名完成: $target"
+            Write-Host "✅ 重命名完成: $targetPath"
           } else {
             Write-Host "❌ 未找到构建产物: $source"
             exit 1
