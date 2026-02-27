@@ -75,7 +75,7 @@ function detectInputType(input) {
   const trimmed = input.trim()
   if (trimmed.startsWith('<') && trimmed.endsWith('>')) {
     try {
-      const parser = new XMLParser({ ignoreAttributes: false })
+      const parser = new XMLParser({ ignoreAttributes: false, parseTagValue: false })
       parser.parse(input)
       return 'xml'
     } catch {
@@ -109,7 +109,7 @@ function processInput(input) {
   
   try {
     if (inputType.value === 'xml') {
-      const parser = new XMLParser({ ignoreAttributes: false })
+      const parser = new XMLParser({ ignoreAttributes: false, parseTagValue: false })
       const jsonObj = parser.parse(input)
       const keys = Object.keys(jsonObj)
       let result = keys.length === 1 ? jsonObj[keys[0]] : jsonObj
