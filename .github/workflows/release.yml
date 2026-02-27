@@ -1,0 +1,277 @@
+name: "Release"
+
+on:
+  push:
+    tags:
+      - "v*"
+      - "swxTools-v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (例如: 1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  validate-tag:
+    name: 校验 Tag 来源并提取版本
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 校验 Tag 指向 main 分支提交
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          git fetch origin main --no-tags
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "❌ 当前 tag (${GITHUB_REF_NAME}) 对应提交不在 main 分支上"
+            exit 1
+          fi
+          echo "✅ Tag 来源校验通过"
+
+      - name: 提取版本信息
+        id: meta
+        run: |
+          set -euo pipefail
+          
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # 手动触发
+            VERSION="${{ github.event.inputs.version }}"
+            TAG="v${VERSION}"
+          else
+            # Tag 触发
+            TAG="${GITHUB_REF_NAME}"
+            VERSION="$(echo "$TAG" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)"
+          fi
+          
+          if [ -z "$VERSION" ]; then
+            echo "❌ 无法提取版本号"
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "✅ 发布版本: $VERSION"
+
+  build-windows:
+    name: 构建 Windows 版本
+    needs: validate-tag
+    runs-on: windows-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
+      - name: 安装 Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: 安装前端依赖
+        working-directory: ./frontend
+        run: npm install
+
+      - name: 缓存 Go 模块
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: 构建 Windows x64 版本
+        env:
+          GOARCH: amd64
+          CGO_ENABLED: 1
+        run: |
+          wails build -platform windows/amd64 -ldflags "-X main.version=${{ needs.validate-tag.outputs.version }}"
+
+      - name: 重命名构建产物
+        run: |
+          $version = "${{ needs.validate-tag.outputs.version }}"
+          $source = "build/bin/swxTools.exe"
+          $target = "swxTools_" + $version + "_windows_x64.exe"
+          $targetPath = "build/bin/" + $target
+
+          if (Test-Path $source) {
+            Rename-Item -Path $source -NewName $target
+            Write-Host "✅ 重命名完成: $targetPath"
+          } else {
+            Write-Host "❌ 未找到构建产物: $source"
+            exit 1
+          }
+
+      - name: 上传构建产物到 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build-x64
+          path: build/bin/*.exe
+          if-no-files-found: error
+
+  build-macos:
+    name: 构建 macOS 版本
+    needs: validate-tag
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            goarch: amd64
+            platform: x64
+          - arch: arm64
+            goarch: arm64
+            platform: arm64
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
+      - name: 安装 Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: 安装 create-dmg
+        run: |
+          brew install create-dmg
+
+      - name: 安装前端依赖
+        working-directory: ./frontend
+        run: npm install
+
+      - name: 缓存 Go 模块
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: 构建 macOS ${{ matrix.platform }} 版本
+        env:
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 1
+        run: |
+          wails build -platform darwin/${{ matrix.goarch }} -ldflags "-X main.version=${{ needs.validate-tag.outputs.version }}"
+
+      - name: 创建 DMG 安装包
+        run: |
+          VERSION="${{ needs.validate-tag.outputs.version }}"
+          ARCH="${{ matrix.platform }}"
+          APP_NAME="swxTools"
+          APP_PATH="build/bin/${APP_NAME}.app"
+          DMG_NAME="${APP_NAME}_${VERSION}_macos_${ARCH}.dmg"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "❌ 未找到 .app 文件: $APP_PATH"
+            ls -la build/bin/
+            exit 1
+          fi
+
+          create-dmg \
+            --volname "${APP_NAME} Installer" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "${APP_NAME}.app" 200 190 \
+            --hide-extension "${APP_NAME}.app" \
+            --app-drop-link 600 185 \
+            "build/bin/${DMG_NAME}" \
+            "$APP_PATH"
+
+          echo "✅ DMG 创建完成: build/bin/${DMG_NAME}"
+
+      - name: 上传构建产物到 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build-${{ matrix.arch }}
+          path: build/bin/*.dmg
+          if-no-files-found: error
+
+  release:
+    name: 创建 Release 并上传
+    needs: [validate-tag, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下载所有构建产物
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+          pattern: '*-build-*'
+          merge-multiple: true
+
+      - name: 列出构建产物
+        run: |
+          echo "📦 构建产物列表:"
+          ls -la ./artifacts/
+
+      - name: 创建 Release 并上传
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.validate-tag.outputs.tag }}
+          name: "swxTools v${{ needs.validate-tag.outputs.version }}"
+          body: |
+            ## swxTools v${{ needs.validate-tag.outputs.version }}
+
+            ### Windows 版本
+
+            | 架构 | 文件名 |
+            |------|--------|
+            | x64 (64位) | swxTools_${{ needs.validate-tag.outputs.version }}_windows_x64.exe |
+
+            ### macOS 版本
+
+            | 架构 | 文件名 |
+            |------|--------|
+            | x64 (Intel) | swxTools_${{ needs.validate-tag.outputs.version }}_macos_x64.dmg |
+            | arm64 (Apple Silicon) | swxTools_${{ needs.validate-tag.outputs.version }}_macos_arm64.dmg |
+
+            ### 安装说明
+
+            #### Windows
+            1. 下载对应架构的可执行文件
+            2. 双击运行即可使用
+
+            #### macOS
+            1. 下载对应架构的 DMG 文件
+            2. 双击打开 DMG
+            3. 将应用拖到 Applications 文件夹
+            4. 首次运行可能需要前往 系统设置 > 隐私与安全性 允许运行
+
+            ### 校验
+
+            请验证下载文件的完整性。
+          files: |
+            ./artifacts/*.exe
+            ./artifacts/*.dmg
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
