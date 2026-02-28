@@ -11,6 +11,11 @@ on:
         description: '版本号 (例如: 1.0.0)'
         required: true
         type: string
+      branch:
+        description: '目标分支 (例如: main, feat/urlencodeTool)'
+        required: true
+        default: 'main'
+        type: string
 
 permissions:
   contents: write
@@ -22,19 +27,32 @@ jobs:
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
       version: ${{ steps.meta.outputs.version }}
+      suffix: ${{ steps.meta.outputs.suffix }}
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 校验 Tag 指向 main 分支提交
+      - name: 校验 Tag 来源分支
         if: github.event_name == 'push'
         run: |
           set -euo pipefail
-          git fetch origin main --no-tags
-          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
-            echo "❌ 当前 tag (${GITHUB_REF_NAME}) 对应提交不在 main 分支上"
+          TAG="${GITHUB_REF_NAME}"
+          
+          # 判断 tag 后缀，确定目标分支
+          if [[ "$TAG" == *"-urlencode"* ]]; then
+            TARGET_BRANCH="feat/urlencodeTool"
+          else
+            TARGET_BRANCH="main"
+          fi
+          
+          echo "📋 Tag: $TAG"
+          echo "🎯 目标分支: $TARGET_BRANCH"
+          
+          git fetch origin "$TARGET_BRANCH" --no-tags
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" "origin/$TARGET_BRANCH"; then
+            echo "❌ 当前 tag 对应提交不在 $TARGET_BRANCH 分支上"
             exit 1
           fi
           echo "✅ Tag 来源校验通过"
@@ -47,11 +65,18 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             # 手动触发
             VERSION="${{ github.event.inputs.version }}"
-            TAG="v${VERSION}"
+            SUFFIX="${{ github.event.inputs.branch }}"
+            if [ "$SUFFIX" != "main" ]; then
+              TAG="v${VERSION}-${SUFFIX}"
+            else
+              TAG="v${VERSION}"
+            fi
           else
             # Tag 触发
             TAG="${GITHUB_REF_NAME}"
             VERSION="$(echo "$TAG" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)"
+            # 提取后缀（如 -urlencode）
+            SUFFIX="$(echo "$TAG" | sed -E 's/^v[0-9]+\.[0-9]+\.[0-9]+//' | sed 's/^-//')"
           fi
           
           if [ -z "$VERSION" ]; then
@@ -61,7 +86,8 @@ jobs:
 
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "✅ 发布版本: $VERSION"
+          echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
+          echo "✅ 发布版本: $VERSION${SUFFIX:+-$SUFFIX}"
 
   build-windows:
     name: 构建 Windows 版本
@@ -220,9 +246,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.validate-tag.outputs.tag }}
-          name: "swxTools v${{ needs.validate-tag.outputs.version }}"
+          name: "swxTools v${{ needs.validate-tag.outputs.version }}${{ needs.validate-tag.outputs.suffix && format('-{0}', needs.validate-tag.outputs.suffix) || '' }}"
           body: |
-            ## swxTools v${{ needs.validate-tag.outputs.version }}
+            ## swxTools v${{ needs.validate-tag.outputs.version }}${{ needs.validate-tag.outputs.suffix && format('-{0}', needs.validate-tag.outputs.suffix) || '' }}
 
             ### Windows 版本
 

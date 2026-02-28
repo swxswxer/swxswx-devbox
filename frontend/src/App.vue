@@ -16,7 +16,7 @@ const navItems = [
   { id: 'text-diff', name: '文本比对', component: TextDiff },
   { id: 'md5AndBase64', name: 'MD5和Base64', component: Md5AndBase64 },
   { id: 'HmacSm3', name: 'HmacSm3加密', component: HmacSm3 },
-  { id: 'url-encode', name: 'URLENCODE', component: UrlEncode },
+  { id: 'url-encode', name: 'URL编码解码', component: UrlEncode },
   { id: 'image-preview', name: '乐刷图片预览', component: ImagePreview },
   { id: 'QRCode-Generator', name: '地址转二维码', component: QRCodeGenerator },
 ]
