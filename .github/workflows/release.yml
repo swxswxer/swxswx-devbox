@@ -89,14 +89,6 @@ jobs:
         working-directory: ./frontend
         run: npm install
 
-      - name: 缓存 Go 模块
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
       - name: 构建 Windows x64 版本
         env:
           GOARCH: amd64
@@ -165,14 +157,6 @@ jobs:
       - name: 安装前端依赖
         working-directory: ./frontend
         run: npm install
-
-      - name: 缓存 Go 模块
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
 
       - name: 构建 macOS ${{ matrix.platform }} 版本
         env:
