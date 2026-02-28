@@ -60,7 +60,9 @@ function switchNav(id) {
     <!-- 右侧工具区 -->
     <main class="tool-area" style="background-color: #f5f7fa; padding: 20px;">
       <div class="tool-card" shadow="hover">
-        <component :is="navItems.find(item => item.id === currentNav)?.component || HelloWorld" />
+        <keep-alive>
+          <component :is="navItems.find(item => item.id === currentNav)?.component || HelloWorld" />
+        </keep-alive>
       </div>
     </main>
   </div>
