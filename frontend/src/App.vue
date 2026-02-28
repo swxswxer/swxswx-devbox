@@ -7,6 +7,7 @@ import Md5AndBase64 from "./components/Md5AndBase64.vue";
 import ImagePreview from "./components/ImagePreview.vue";
 import QRCodeGenerator from "./components/QRCodeGenerator.vue";
 import HmacSm3 from "./components/HmacSm3.vue";
+import UrlEncode from "./components/UrlEncode.vue";
 
 // 导航项数据
 const navItems = [
@@ -15,6 +16,7 @@ const navItems = [
   { id: 'text-diff', name: '文本比对', component: TextDiff },
   { id: 'md5AndBase64', name: 'MD5和Base64', component: Md5AndBase64 },
   { id: 'HmacSm3', name: 'HmacSm3加密', component: HmacSm3 },
+  { id: 'url-encode', name: 'URLENCODE', component: UrlEncode },
   { id: 'image-preview', name: '乐刷图片预览', component: ImagePreview },
   { id: 'QRCode-Generator', name: '地址转二维码', component: QRCodeGenerator },
 ]
