@@ -1,4 +1,4 @@
-# swxTools
+# DevBox
 
 一款基于 Vue 3 + Wails 构建的桌面端开发者工具箱，提供常用的加密、格式化、比对等功能。
 
@@ -21,6 +21,15 @@
     - 遵循 RFC 2104 标准实现
     - 适用于国密场景的数据完整性验证
 - **依赖**：`gm-crypto`
+
+#### URL 编码解码
+- **功能**：URL 编码（encode）和解码（decode）转换
+- **特性**：
+    - 支持 URL 编码和解码双向转换
+    - 支持中文等特殊字符编码
+    - 一键交换输入输出内容
+    - 一键复制结果
+- **依赖**：原生 JavaScript API
 
 ### 📝 格式化工具
 
@@ -104,6 +113,7 @@ frontend/
 │   │   ├── TextDiff.vue      # 文本比对
 │   │   ├── Md5AndBase64.vue  # MD5/Base64 加密
 │   │   ├── HmacSm3.vue       # HMAC-SM3 加密
+│   │   ├── UrlEncode.vue     # URL 编码解码
 │   │   ├── ImagePreview.vue  # 图片预览
 │   │   ├── QRCodeGenerator.vue # 二维码生成
 │   │   └── HelloWorld.vue    # 示例组件
@@ -139,7 +149,7 @@ wails build
 1.MacOS提示应用程序已损坏，无法打开。
 在终端中执行以下命令：
 ```bash
-sudo xattr -dr com.apple.quarantine /Applications/swxTools.app
+sudo xattr -dr com.apple.quarantine /Applications/DevBox.app
 ```
 然后再次运行应用程序。
 ## 截图预览

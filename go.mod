@@ -1,4 +1,4 @@
-module swxTools
+module devbox
 
 go 1.23
 

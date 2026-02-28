@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - "v*"
-      - "swxTools-v*"
+      - "devbox-v*"
   workflow_dispatch:
     inputs:
       version:
@@ -125,8 +125,8 @@ jobs:
       - name: 重命名构建产物
         run: |
           $version = "${{ needs.validate-tag.outputs.version }}"
-          $source = "build/bin/swxTools.exe"
-          $target = "swxTools_" + $version + "_windows_x64.exe"
+          $source = "build/bin/DevBox.exe"
+          $target = "DevBox_" + $version + "_windows_x64.exe"
           $targetPath = "build/bin/" + $target
 
           if (Test-Path $source) {
@@ -195,7 +195,7 @@ jobs:
         run: |
           VERSION="${{ needs.validate-tag.outputs.version }}"
           ARCH="${{ matrix.platform }}"
-          APP_NAME="swxTools"
+          APP_NAME="DevBox"
           APP_PATH="build/bin/${APP_NAME}.app"
           DMG_NAME="${APP_NAME}_${VERSION}_macos_${ARCH}.dmg"
 
@@ -246,22 +246,22 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.validate-tag.outputs.tag }}
-          name: "swxTools v${{ needs.validate-tag.outputs.version }}${{ needs.validate-tag.outputs.suffix && format('-{0}', needs.validate-tag.outputs.suffix) || '' }}"
+          name: "DevBox v${{ needs.validate-tag.outputs.version }}${{ needs.validate-tag.outputs.suffix && format('-{0}', needs.validate-tag.outputs.suffix) || '' }}"
           body: |
-            ## swxTools v${{ needs.validate-tag.outputs.version }}${{ needs.validate-tag.outputs.suffix && format('-{0}', needs.validate-tag.outputs.suffix) || '' }}
+            ## DevBox v${{ needs.validate-tag.outputs.version }}${{ needs.validate-tag.outputs.suffix && format('-{0}', needs.validate-tag.outputs.suffix) || '' }}
 
             ### Windows 版本
 
             | 架构 | 文件名 |
             |------|--------|
-            | x64 (64位) | swxTools_${{ needs.validate-tag.outputs.version }}_windows_x64.exe |
+            | x64 (64位) | DevBox_${{ needs.validate-tag.outputs.version }}_windows_x64.exe |
 
             ### macOS 版本
 
             | 架构 | 文件名 |
             |------|--------|
-            | x64 (Intel) | swxTools_${{ needs.validate-tag.outputs.version }}_macos_x64.dmg |
-            | arm64 (Apple Silicon) | swxTools_${{ needs.validate-tag.outputs.version }}_macos_arm64.dmg |
+            | x64 (Intel) | DevBox_${{ needs.validate-tag.outputs.version }}_macos_x64.dmg |
+            | arm64 (Apple Silicon) | DevBox_${{ needs.validate-tag.outputs.version }}_macos_arm64.dmg |
 
             ### 安装说明
 

@@ -35,7 +35,7 @@ function switchNav(id) {
     <!-- 左侧导航栏 -->
     <aside class="sidebar" style="background-color: #001529; overflow: hidden;">
       <div class="sidebar-header" style="padding: 20px; text-align: center; border-bottom: 1px solid #1f2d3d;">
-        <h1 style="color: white; font-size: 1.2rem; font-weight: bold; margin: 0;">工具箱</h1>
+        <h1 style="color: white; font-size: 1.2rem; font-weight: bold; margin: 0;">DevBox</h1>
       </div>
       <el-menu
         :default-active="currentNav"
